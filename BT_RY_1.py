@@ -8,7 +8,7 @@ screen_height = 900
 class Player(object):
     def __init__(self):
         self.x = 500
-        self.y = 700
+        self.y = 834
         self.img_left = pygame.image.load('character1_edit.png')
         self.img_default = pygame.image.load('character2_edit.png')
         self.img_right = pygame.image.load('character3_edit.png')
@@ -17,9 +17,15 @@ class Player(object):
         if pos == 1:
             self.x += pos + 4
             screen.blit(self.img_right,(self.x,self.y))
+            if self.x >= screen_width - 48 :
+                self.x = screen_width - 48
+
         elif pos == -1:
             self.x += pos - 4
             screen.blit(self.img_left,(self.x,self.y))
+            if self.x <= 0:
+                self.x = 0
+
         else:
             screen.blit(self.img_default,(self.x,self.y))
 
@@ -82,7 +88,7 @@ while not done:
         gun1.x = player.x+20
         gun1.y = player.y
         #all_sprites_list.add(gun1)
-
-    player.update(pos)
+    
     gun1.update()
+    player.update(pos)
     pygame.display.update()

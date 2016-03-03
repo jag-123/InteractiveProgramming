@@ -1,9 +1,27 @@
 """ball is life"""
 import pygame
+import os, sys
+from pygame.locals import *
+
+if not pygame.mixer: print 'Warning, sound disabled'
 
 gravity = 1
 screen_width = 1700
 screen_height = 1000
+
+def load_sound(name):
+	""" Loads specific sound into game """
+	class Nonesound:
+		def play(self): pass
+	if not pygame.mixer:
+		return NoneSound()
+	fullname = os.path.join('data', name)
+	try:
+		sound = pygame.mixer.Sound(fullname)
+	except pygame.error, message:
+		print 'Cannot load sound:', wav
+		raise SystemExit, message
+	return sound
 
 class Ball(pygame.sprite.Sprite):
 	def __init__(self, size, speed, x = 0, y = 0):
@@ -27,8 +45,6 @@ class Ball(pygame.sprite.Sprite):
 		self.rect.top = self.walls(self.rect.top, 100 , screen_height)
 		self.rect.bottom = self.walls(self.rect.bottom, 0 , screen_height)
 
-		screen.blit(self.image,self.rect)
-
 	def walls(self,number, min_number, max_number):
 		self.number = number
 		self.min_number = min_number
@@ -36,6 +52,7 @@ class Ball(pygame.sprite.Sprite):
 		return min(max(self.number,self.min_number),self.max_number)
 
 pygame.init()
+pygame.mixer.init()
 
 bubble_list = pygame.sprite.Group()
 all_sprites_list = pygame.sprite.Group()
@@ -56,6 +73,8 @@ score = 0
 b.rect.x = 500
 b.rect.y = 100
 
+bubble_pop_sound = load_sound('Bubble_pop.wav')
+
 while not done:
 	screen.fill((0,0,0))
 	for event in pygame.event.get(): 
@@ -70,8 +89,10 @@ while not done:
 
 	bubble_hit_list = pygame.sprite.spritecollide(b2, bubble_list, True)
 	for bubble in bubble_hit_list:
+		# pygame.sprite.Group.remove(bubble_list, bubble)
 		score +=1
 		print score
+		bubble_pop_sound.play()
 
 	all_sprites_list.draw(screen)
 	pygame.display.update()
