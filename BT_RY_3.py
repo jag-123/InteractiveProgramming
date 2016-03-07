@@ -32,6 +32,7 @@ class Player(pygame.sprite.Sprite):
         self.img_right = pygame.image.load('character3_edit.png')
         self.image = self.img_default
         self.rect = self.image.get_rect()
+        self.gun = Gun()
         self.rect.left = 500
         self.rect.top = 834
 
@@ -96,11 +97,46 @@ class Ball(pygame.sprite.Sprite):
         self.max_number = max_number
         return min(max(self.number,self.min_number),self.max_number)
 
-player = Player()
-gun1 = Gun()
+class Game(object):
+    def __init__(self):
+        self.balls = []
+        #self.balls.append(Ball(8,[5,1]))
+        #self.balls.append(Ball(12,[3,1]))
+
+    def is_collision(self,player,list_of_bubbles):
+        for bubble in bubble_list:
+            if player.gun.active and pygame.sprite.spritecollide(player.gun, bubble_list, True):
+                global score
+                score +=1
+                print 'Your current score is %s' % (score)
+                bubble_pop_sound.play()
+                player.gun.active = False
+
+            if pygame.sprite.spritecollide(player,bubble_list,True):
+                pygame.time.delay(1000)
+                global lives
+                lives -= 1
+                if lives == 1:
+                    print 'You have %s life left' % (lives)
+                else:
+                    print 'You have %s lives left' % (lives)
+                if lives == 0:
+                    player.kill()
+                return False
+
+    def split_ball(self,index):
+        ball = self.balls[index]
+        if ball.size > 3:
+            self.balls.append(Ball(ball.size-2,[3,3], ball.rect.left - 5))
+            self.balls.append(Ball(ball.size-2,[-3,3], ball.rect.left + 5))
+        del self.balls[index]
+
+game = Game()
+player1 = Player()
 pos = 0
 
 pygame.init()
+pygame.display.set_caption('Bubble Trouble')
 pygame.mixer.init()
 
 bubble_list = pygame.sprite.Group()
@@ -116,7 +152,7 @@ bubble_list.add(b3)
 all_sprites_list.add(b)
 all_sprites_list.add(b2)
 all_sprites_list.add(b3)
-all_sprites_list.add(player)
+all_sprites_list.add(player1)
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 
@@ -145,46 +181,50 @@ while not done:
         done = True
     elif key[pygame.K_LEFT] and key[pygame.K_RIGHT]:
         pos = 0
-        player.image = player.img_default
+        player1.image = player1.img_default
     elif key[pygame.K_RIGHT]:
         pos = 1
-        player.image = player.img_right
+        player1.image = player1.img_right
     elif key[pygame.K_LEFT]:
         pos = -1
-        player.image = player.img_left
+        player1.image = player1.img_left
     elif event.type == pygame.KEYUP:
         pos = 0
-        player.image = player.img_default
+        player1.image = player1.img_default
 
-    if key[pygame.K_SPACE] and gun1.active == False:
-        all_sprites_list.add(gun1)
-        gun1.active = True
-        gun1.rect.left = player.rect.left+20
-        gun1.rect.top = player.rect.top
-        player.image = player.img_default
+    if key[pygame.K_SPACE] and player1.gun.active == False:
+        all_sprites_list.add(player1.gun)
+        player1.gun.active = True
+        player1.gun.rect.left = player1.rect.left+20
+        player1.gun.rect.top = player1.rect.top
+        player1.image = player1.img_default
     
     for sprite in all_sprites_list:
         sprite.update()
-    if gun1.active:
-        bubble_hit_list = pygame.sprite.spritecollide(gun1, bubble_list, True)
-        for bubble in bubble_hit_list:
-            # pygame.sprite.Group.remove(bubble_list, bubble)
-            score +=1
-            print 'Your current score is %s' % (score)
-            bubble_pop_sound.play()
-            # gun1.remove(all_sprites_list)
-            gun1.active = False
 
-    sad_face = pygame.sprite.spritecollide(player, bubble_list, True)
-    for bubble in sad_face:
-        pygame.time.delay(1000)
-        lives -= 1
-        if lives == 1:
-            print 'You have %s life left' % (lives)
-        else:
-            print 'You have %s lives left' % (lives)
-        if lives == 0:
-            player.kill()
+    # if gun1.active:
+    #     bubble_hit_list = pygame.sprite.spritecollide(gun1, bubble_list, True)
+
+    #     for bubble in bubble_hit_list:
+    #         # pygame.sprite.Group.remove(bubble_list, bubble)
+    #         score +=1
+    #         print 'Your current score is %s' % (score)
+    #         bubble_pop_sound.play()
+    #         # gun1.remove(all_sprites_list)
+    #         gun1.active = False
+
+    game.is_collision(player1,bubble_list)
+
+    # sad_face = pygame.sprite.spritecollide(player1, bubble_list, True)
+    # for bubble in sad_face:
+    #     pygame.time.delay(1000)
+    #     lives -= 1
+    #     if lives == 1:
+    #         print 'You have %s life left' % (lives)
+    #     else:
+    #         print 'You have %s lives left' % (lives)
+    #     if lives == 0:
+    #         player1.kill()
 
     all_sprites_list.draw(screen)
     pygame.display.update()

@@ -2,8 +2,7 @@
 import pygame
 import os, sys
 from pygame.locals import *
-
-if not pygame.mixer: print 'Warning, sound disabled' 
+import random
 
 gravity = 1
 screen_width = 1700
@@ -11,6 +10,8 @@ screen_height = 900
 fps = 120
 score = 0
 lives = 3
+
+pictures = ['cedric.png','daniel.png','willem.png','kevin.png']
 
 def load_sound(name):
     """ Loads specific sound into game """
@@ -70,7 +71,8 @@ class Ball(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.size = size
         self.speed = speed
-        self.image = pygame.image.load('small_bubble1.png')
+        self.pic = random.choice(pictures)
+        self.image = pygame.image.load(self.pic)
         self.image = pygame.transform.scale(self.image,(size*10,size*10))
         self.rect = self.image.get_rect()
         self.rect.left = x
@@ -102,7 +104,9 @@ class Game(object):
     def __init__(self):
         self.game_over = False
         self.balls = []
-        self.balls.append(Ball(10,[6,4]))
+        self.character_hit_list = []
+        self.bubble_hit_list = []
+        self.balls.append(Ball(12,[6,4]))
         #self.balls.append(Ball(3,[-5,3],screen_width,100))
         #self.balls.append(Ball(10,[4,2]))
         #self.balls.append(Ball(12,[3,1]))
@@ -134,6 +138,7 @@ class Game(object):
     def is_collision(self,player,bubble_list):
         for index, ball in enumerate(self.balls):
             if player.gun.active and pygame.sprite.collide_rect(player.gun, ball):
+                self.bubble_hit_list.append(ball.pic)
                 global score
                 score +=1
                 bubble_pop_sound.play()
@@ -141,9 +146,11 @@ class Game(object):
                 ball.kill()
                 self.split_ball(index)
 
-            if pygame.sprite.collide_rect(player,ball):
+            if pygame.sprite.collide_mask(ball,player):
+                self.character_hit_list.append(ball.pic)
                 global lives
                 lives -= 1
+                #player_hit_sound.play()
                 player.gun.active = False
                 ball.kill()
                 self.split_ball(index)
@@ -155,7 +162,8 @@ class Game(object):
 
     def split_ball(self,index):
         ball = self.balls[index]
-        self.balls.pop(index)
+        del self.balls[index]
+        
         if ball.size > 2:
             self.balls.append(Ball(ball.size-2,[-3,-3], ball.rect.left - 5, ball.rect.top-200))
             self.balls.append(Ball(ball.size-2,[3,-3], ball.rect.left + 5, ball.rect.top-200))
@@ -179,7 +187,8 @@ game.all_sprites_list.add(player1)
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 
-bubble_pop_sound = load_sound('Bubble_pop.wav')
+bubble_pop_sound = load_sound('bubble_pop.wav')
+#player_hit_sound = load_sound('Frant_edit.wav')
 
 background = pygame.image.load('background1.png')
 
