@@ -57,13 +57,13 @@ class Player(pygame.sprite.Sprite):
     def update(self, pos):
         self.pos = pos
         if self.alive:
-            if pos == 1:                                                # if right key is pressed, character moves right
-                self.rect.left += pos + 5
+            if self.pos == 1:                                           # if right key is pressed, character moves right
+                self.rect.left += self.pos + 5
                 if self.rect.left >= screen_width - 48 :                # won't go past edge of screen
                     self.rect.left = screen_width - 48
 
-            elif pos == -1:                                             # if left key is pressed, character moves left
-                self.rect.left += pos - 5
+            elif self.pos == -1:                                        # if left key is pressed, character moves left
+                self.rect.left += self.pos - 5
                 if self.rect.left <= 0:                                 # won't go past edge of screen
                     self.rect.left = 0
 
@@ -135,9 +135,6 @@ class GameModel(object):
 
         self.balls = []
         self.balls.append(Ball(12,[6,4]))
-        #self.balls.append(Ball(3,[-5,3],screen_width,100))
-        #self.balls.append(Ball(10,[4,2]))
-        #self.balls.append(Ball(12,[3,1]))
         self.list_of_bubbles = pygame.sprite.Group()
         self.player_list = pygame.sprite.Group()
         self.gun_list = pygame.sprite.Group()
@@ -152,8 +149,7 @@ class GameModel(object):
         for ball in self.balls:
             self.list_of_bubbles.add(ball)
 
-        self.player_list.add(self.player1)
-        
+        self.player_list.add(self.player1)        
 
     def is_collision(self,player,bubble_list):
         """ Checks for collisions between sprites """
@@ -166,7 +162,7 @@ class GameModel(object):
                 ball.kill()
                 self.split_ball(index)
 
-            if pygame.sprite.collide_rect(player,ball):
+            if pygame.sprite.collide_mask(player,ball):
                 global lives
                 lives -= 1
                 player.gun.active = False
@@ -176,7 +172,6 @@ class GameModel(object):
 
                 if lives <= 0:
                     self.alive = False
-                    #player.kill()
 
     def split_ball(self,index):
         """ Splits bubbles into 2 smaller bubbles once hit by arrow """
@@ -190,7 +185,7 @@ class GameModel(object):
 
     def draw_sprites(self):
         """ Draw all sprites onto screen """
-        all_sprites_list = [self.list_of_bubbles, self.player_list, self.gun_list]
+        all_sprites_list = [self.list_of_bubbles, self.gun_list, self.player_list]
         return all_sprites_list
 
 class GameController(object):
@@ -204,7 +199,6 @@ class GameController(object):
     def player_mvmt(self):
         """ Organizes keypresses """
         key = pygame.key.get_pressed()
-        pygame.event.pump
         self.pause = False
         player1 = Player()
 
@@ -213,29 +207,28 @@ class GameController(object):
             if event.type == pygame.QUIT: 
                 self.done = True
 
-            if key[pygame.K_LEFT] and key[pygame.K_RIGHT]:
-                self.model.player1.pos = 0
-                self.model.player1.image = self.model.player1.img_default
-            elif key[pygame.K_RIGHT]:
-                self.model.player1.pos = 1
-                self.model.player1.image = self.model.player1.img_right
-            elif key[pygame.K_LEFT]:
-                self.model.player1.pos = -1
-                self.model.player1.image = self.model.player1.img_left
-            if key[pygame.K_SPACE] and player1.gun.active == False:
-                self.model.gun_list.add(player1.gun)
-                self.model.player1.gun.active = True
-                self.model.player1.gun.rect.left = self.model.player1.rect.left+20
-                self.model.player1.gun.rect.top = self.model.player1.rect.top
-                player1.image = player1.img_default
             elif event.type == pygame.KEYUP:
                 self.model.player1.image = self.model.player1.img_default
                 if key[pygame.K_p]:
                     self.pause = True
 
-        return (self.done, self.pause, self.model.player1.image, self.model.player1.gun.active)
-# if not game.balls:
-#     game.balls.append(Ball(10,[6,4]))
+        if key[pygame.K_LEFT] and key[pygame.K_RIGHT]:
+            self.model.player1.pos = 0
+            self.model.player1.image = self.model.player1.img_default
+        elif key[pygame.K_RIGHT]:
+            self.model.player1.pos = 1
+            self.model.player1.image = self.model.player1.img_right
+        elif key[pygame.K_LEFT]:
+            self.model.player1.pos = -1
+            self.model.player1.image = self.model.player1.img_left
+        if key[pygame.K_SPACE] and self.model.player1.gun.active == False:
+            self.model.gun_list.add(self.model.player1.gun)
+            self.model.player1.gun.active = True
+            self.model.player1.gun.rect.left = self.model.player1.rect.left+20
+            self.model.player1.gun.rect.top = self.model.player1.rect.top
+            player1.image = player1.img_default
+
+        return (self.done, self.pause)
 
 class GameView(object):
     """ View for game """
@@ -315,7 +308,7 @@ class GameView(object):
         """ Draws start screen for game """
         self.draw(True)
 
-        Obj_rect = self.obj_surf.get_rect()                                             # wordy, but used to center text on screen 
+        Obj_rect = self.obj_surf.get_rect()                                   # wordy, but used to center text on screen 
         ObjText_x = self.screen.get_width() / 2 - Obj_rect.width / 2
         ObjText_y = (self.screen.get_height() / 2 - Obj_rect.height / 2) - 150
         self.screen.blit(self.obj_surf, (ObjText_x, ObjText_y))
@@ -406,7 +399,7 @@ class GameMain(object):
                         done = True
             elif self.model.alive:
                 self.model.player1.pos = 0
-                done, self.pause, self.model.player1.image, self.model.player1.active = self.controller.player_mvmt()
+                done, self.pause = self.controller.player_mvmt()
                 self.model.update(self.model.player1.pos)
                 self.model.is_collision(self.model.player1, self.model.list_of_bubbles)
                 self.view.draw(self.model.alive)
@@ -414,7 +407,7 @@ class GameMain(object):
             else:
                 while self.model.player1.rect.right > -50:
                     self.model.player1.pos = 0
-                    done, self.pause, self.model.player1.image, self.model.player1.active = self.controller.player_mvmt()
+                    done, self.pause = self.controller.player_mvmt()
                     self.model.update(self.model.player1.pos)
                     self.model.is_collision(self.model.player1, self.model.list_of_bubbles)
                     self.view.draw(self.model.alive)
@@ -439,14 +432,3 @@ if __name__ == '__main__':
     MainWindow.main_menu()
     MainWindow.GameLoop()
     game_over(MainWindow)
-
-
-    # GameOverFont = pygame.font.SysFont('ubuntu',150)
-    # GameOverText = GameOverFont.render("Game Over", True, (255,0,0))
-    # GameOverText_rect = GameOverText.get_rect()
-    # GameOverText_x = screen.get_width() / 2 - GameOverText_rect.width / 2
-    # GameOverText_y = screen.get_height() / 2 - GameOverText_rect.height / 2
-    # screen.blit(GameOverText, [GameOverText_x, GameOverText_y])
-    # pygame.display.flip()
-    # time.sleep(1)
-
