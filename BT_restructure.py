@@ -14,11 +14,9 @@ gravity = 1
 screen_width = 1700
 screen_height = 900
 fps = 120
-score = 0
-lives = 3
 
 # prepare/load pictures 
-pictures = ['cedric.png','daniel.png','willem.png','kevin.png']
+pictures = ['cedric.png','daniel.png','willem.png','kevin.png','anpan.png']
 
 pygame.display.set_caption('Hot Tamales Awesome Game')
 
@@ -28,17 +26,8 @@ pygame.time.set_timer(pygame.USEREVENT, 1000)
 
 pygame.mixer.init()                                                     # initializes sound mixer
 
-def load_sound(name):
-    """ Loads specific sound into game """
-    class Nonesound:
-        def play(self): pass
-    if not pygame.mixer:
-        return NoneSound()
-    fullname = os.path.join('data', name)
-    sound = pygame.mixer.Sound(fullname)
-    return sound
-
-bubble_pop_sound = load_sound('Bubble_pop.wav')
+bubble_pop_sound = pygame.mixer.Sound('bubble_pop.ogg')
+player_hit_sound = pygame.mixer.Sound('Frant_edit2.ogg')
 
 class Player(pygame.sprite.Sprite):
     """ Main character for game """
@@ -129,6 +118,7 @@ class GameModel(object):
         self.height = screen_height
 
         self.score = 0
+        self.lives = 3
         self.player1 = Player()
 
         self.alive = self.player1.alive
@@ -144,7 +134,6 @@ class GameModel(object):
         self.list_of_bubbles.update()
         self.player_list.update(pos)
         self.gun_list.update()
-        self.alive = self.player1.alive
 
         for ball in self.balls:
             self.list_of_bubbles.add(ball)
@@ -155,22 +144,21 @@ class GameModel(object):
         """ Checks for collisions between sprites """
         for index, ball in enumerate(self.balls):
             if player.gun.active and pygame.sprite.collide_rect(player.gun, ball):
-                global score
-                score +=1
                 bubble_pop_sound.play()
+                self.score +=1
                 player.gun.active = False
                 ball.kill()
                 self.split_ball(index)
 
             if pygame.sprite.collide_mask(player,ball):
-                global lives
-                lives -= 1
+                player_hit_sound.play()
+                self.lives -= 1
                 player.gun.active = False
                 ball.kill()
                 self.split_ball(index)
                 pygame.time.delay(500)
 
-                if lives <= 0:
+                if self.lives <= 0:
                     self.alive = False
 
     def split_ball(self,index):
@@ -203,14 +191,10 @@ class GameController(object):
         player1 = Player()
 
         for event in pygame.event.get():
-
             if event.type == pygame.QUIT: 
                 self.done = True
-
-            elif event.type == pygame.KEYUP:
-                self.model.player1.image = self.model.player1.img_default
-                if key[pygame.K_p]:
-                    self.pause = True
+            elif key[pygame.K_p]:
+                self.pause = True
 
         if key[pygame.K_LEFT] and key[pygame.K_RIGHT]:
             self.model.player1.pos = 0
@@ -221,6 +205,9 @@ class GameController(object):
         elif key[pygame.K_LEFT]:
             self.model.player1.pos = -1
             self.model.player1.image = self.model.player1.img_left
+        else:
+            self.model.player1.image = self.model.player1.img_default
+
         if key[pygame.K_SPACE] and self.model.player1.gun.active == False:
             self.model.gun_list.add(self.model.player1.gun)
             self.model.player1.gun.active = True
@@ -248,61 +235,35 @@ class GameView(object):
         self.start_surf = self.font.render('Press anything to start', False, WHITE)
         self.start_surf2 = self.font.render('Press P to pause', False, WHITE)
         self.game_over_surf = self.font.render('GAME OVER', False, RED)
-        self.restart_surf = self.font.render('Press anything to restart', False, RED)
+        self.restart_surf = self.font.render('Press R to restart', False, RED)
 
     def draw(self, alive):
         """ Redraws the game window """
-        #counter = 3
         self.screen.blit(background, (0,0))
 
-        #self.model.all_sprites_list.draw(self.screen)
+        self.draw_score()
+        self.draw_lives_left()
 
-        self.score()
-        self.lives_left()
-
-        # for event in pygame.event.get():
-        #     if event.type == pygame.USEREVENT:
-        #         if counter > -1:
-        #             counter -= 1
-        #             self.startround_counter(counter)
-            # if counter == -1:
-            #     self.model.is_collision(player1, self.model.list_of_bubbles)
-            #     self.model.update()
-
-            #     for sprite in self.model.all_sprites_list:
-            #         sprite.update()
         drawn = self.model.draw_sprites()
-        for x in drawn:
-            x.draw(self.screen)
-
-        if not alive:
-            self.screen.blit(self.font.render('GAME OVER', False, RED), (350, 350))
+        for sprite in drawn:
+            sprite.draw(self.screen)
         pygame.display.flip()
 
-    def score(self):
+    def draw_score(self):
         """ Draws score on screen """
         font = pygame.font.SysFont('ubuntu',50)
-        scoretext = font.render('Score: ' + str(score), 2, [255,255,255])
+        scoretext = font.render('Score: ' + str(self.model.score), 2, [255,255,255])
         boxsize = scoretext.get_rect()
         scoreXpos = (screen_width-boxsize[2])/2
         self.screen.blit(scoretext,[scoreXpos,20])
 
-    def lives_left(self):
+    def draw_lives_left(self):
         """ Draws how many lives the player has left on screen """
         font = pygame.font.SysFont('ubuntu',40)
-        livestext = font.render('Lives remaining: ' + str(lives), 2, [255,255,255])
+        livestext = font.render('Lives remaining: ' + str(self.model.lives), 2, [255,255,255])
         boxsize = livestext.get_rect()
         livesXpos = (screen_width-boxsize[2])/2
         self.screen.blit(livestext,[livesXpos,70])
-
-    def startround_counter(self, counter):
-        """ Draws countdown before level begins """
-        font = pygame.font.SysFont('ubuntu',150)
-        timertext = font.render(str(counter), 2, [255,0,0])
-        boxsize = timertext.get_rect()
-        timerXpos = (screen_width-boxsize[2])/2
-        self.screen.blit(timertext,[timerXpos,400])
-        pygame.time.delay(1000)
 
     def start(self):
         """ Draws start screen for game """
@@ -405,13 +366,8 @@ class GameMain(object):
                 self.view.draw(self.model.alive)
                 self.clock.tick(fps)
             else:
-                while self.model.player1.rect.right > -50:
-                    self.model.player1.pos = 0
-                    done, self.pause = self.controller.player_mvmt()
-                    self.model.update(self.model.player1.pos)
-                    self.model.is_collision(self.model.player1, self.model.list_of_bubbles)
-                    self.view.draw(self.model.alive)
-                    self.clock.tick(fps)
+                self.model.score = 0
+                self.model.lives = 3
                 done = True
     
 def game_over(MainWindow):
@@ -421,8 +377,9 @@ def game_over(MainWindow):
         MainWindow.view.draw_game_over()
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
-                MainWindow.replay()
-                MainWindow.GameLoop()
+                if event.key == pygame.K_r:
+                    MainWindow.replay()
+                    MainWindow.GameLoop()
             elif event.type == pygame.QUIT:
                 start = False
                 break
