@@ -22,10 +22,8 @@ CURR_DIR = os.path.dirname(os.path.realpath(__file__))
 
 # prepare/load pictures 
 pictures = ['cedric.png','daniel.png','willem.png','kevin.png','anpan.png','mica.png']
-
-pygame.display.set_caption('Hot Tamales Awesome Game')
-
 background = pygame.image.load('olin.png')
+bubble_background = pygame.image.load('bubble_background.png')
 
 size = 22
 cedric = pygame. image.load('cedric.png')
@@ -41,11 +39,10 @@ anpan = pygame.transform.scale(anpan,(size*10,size*10))
 mica = pygame.image.load('mica.png')
 mica = pygame.transform.scale(mica,(size*10,size*10))
 
-bubble_background = pygame.image.load('bubble_background.png')
-
 pygame.time.set_timer(pygame.USEREVENT, 1000)
 
-pygame.mixer.init()                                                     # initializes sound mixer
+# initialize/load sounds
+pygame.mixer.init()
 
 bubble_pop_sound = pygame.mixer.Sound('bubble_pop.ogg')
 player_hit_sound = pygame.mixer.Sound('Frant_edit2.ogg')
@@ -54,7 +51,7 @@ class Player(pygame.sprite.Sprite):
     """ Main character for game """
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.alive = True                   # if False, game over
+        self.alive = True                                               # if False, game over
         self.img_left = pygame.image.load('character1_edit.png')        # 3 pictures for each direction character is facing
         self.img_default = pygame.image.load('character2_edit.png')
         self.img_right = pygame.image.load('character3_edit.png')
@@ -103,7 +100,7 @@ class Ball(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.size = size
         self.speed = speed
-        self.pic = random.choice(pictures)                              # randomly chooses between given pictures of fellow classmates
+        self.pic = random.choice(pictures)                              # randomly chooses between given pictures of Olin faces
         self.image = pygame.image.load(self.pic)
         self.image = pygame.transform.scale(self.image,(size*10,size*10))
         self.rect = self.image.get_rect()
@@ -113,7 +110,7 @@ class Ball(pygame.sprite.Sprite):
     def update(self):
         self.rect = self.rect.move(self.speed)
 
-        if self.rect.left < 0 or self.rect.right > screen_width:        # bubbes bounce off of left/right/top/bottom walls
+        if self.rect.left < 0 or self.rect.right > screen_width:        # bubbles bounce off of left/right/top/bottom walls
             self.speed[0] = -self.speed[0]
         if self.rect.top < 100 or self.rect.bottom > screen_height:
             self.speed[1] = -self.speed[1]
@@ -126,6 +123,7 @@ class Ball(pygame.sprite.Sprite):
         self.speed[1] += gravity                                        # simulates effect of gravity
 
     def walls(self,number, min_number, max_number):
+        """ helper function for ball to bounce off of walls """
         self.number = number
         self.min_number = min_number
         self.max_number = max_number
@@ -216,7 +214,7 @@ class GameModel(object):
         ball = self.balls[index]
         del self.balls[index]
 
-        if ball.size > 2:
+        if ball.size > 2:                                               # smallest ball size is 2
             self.balls.append(Ball(ball.size-2,[-3,-3], ball.rect.left - 5, ball.rect.top-200))
             self.balls.append(Ball(ball.size-2,[3,-3], ball.rect.left + 5, ball.rect.top-200))
 
@@ -333,7 +331,8 @@ class GameView(object):
         self.draw(True)
         self.screen.blit(bubble_background, (0,0))
 
-        Obj_rect = self.obj_surf.get_rect()                                   # wordy, but used to center text on screen 
+        """ Game Title-- Bubble Trouble: Olin Edition """
+        Obj_rect = self.obj_surf.get_rect()                                   # centers text on screen 
         ObjText_x = self.screen.get_width() / 2 - Obj_rect.width / 2
         ObjText_y = (self.screen.get_height() / 2 - Obj_rect.height / 2) - 150
         self.screen.blit(self.obj_surf, (ObjText_x, ObjText_y-100))
@@ -342,6 +341,7 @@ class GameView(object):
         # Obj2Text_x = self.screen.get_width() / 2 - Obj2_rect.width / 2
         # self.screen.blit(self.obj_surf2, (Obj2Text_x, ObjText_y+70))
 
+        """ Game Instructions: Press these keys to play """
         Instruct_rect = self.instructions_surf.get_rect()
         InstructText_x = self.screen.get_width() / 2 - Instruct_rect.width / 2
         self.screen.blit(self.instructions_surf, (InstructText_x,ObjText_y+170))
@@ -368,6 +368,7 @@ class GameView(object):
         #self.screen.blit(pause_background, (0,0))
         self.screen.blit(self.pause_surf, (PauseText_x,PauseText_y))
 
+        """ Draws Olin faces to give player better look at their pretty pics """
         self.screen.blit(cedric,(200, 100))
         self.screen.blit(daniel,(200, 600))
         self.screen.blit(willem,(750, 100))
@@ -381,26 +382,31 @@ class GameView(object):
         """ Draws game over screen for game """
         self.screen.blit(bubble_background, (0,0))
 
+        """ Game Over """
         GameOverText_rect = self.game_over_surf.get_rect()
         GameOverText_x = self.screen.get_width() / 2 - GameOverText_rect.width / 2
         GameOverText_y = self.screen.get_height() / 2 - GameOverText_rect.height / 2 - 250
         self.screen.blit(self.game_over_surf, [GameOverText_x, GameOverText_y])
         
-
+        """ Press R to Restart """
         RestartText_rect = self.restart_surf.get_rect()
         RestartText_x = self.screen.get_width() / 2 - RestartText_rect.width / 2
         self.screen.blit(self.restart_surf, (RestartText_x, GameOverText_y+60))
         
+        """ You shot: """
         ScoreText_rect = self.score_surf.get_rect()
         ScoreText_x = self.screen.get_width() / 2 - ScoreText_rect.width / 2
         self.screen.blit(self.score_surf, (ScoreText_x, GameOverText_y+165))
 
+        """ You were killed by: """
         ScoreText2_rect = self.score_surf2.get_rect()
         ScoreText2_x = self.screen.get_width() / 2 - ScoreText2_rect.width / 2
         self.screen.blit(self.score_surf2, (ScoreText2_x, GameOverText_y+520))
 
+        """ Who you shot and who killed you based on histogram """
         self.draw_score_sheet(self.model.bubble_hit_list, self.model.character_hit_list)
 
+        """ High Score """
         HiscoreText_rect = self.hiscore_surf.get_rect()
         HiscoreText_x = self.screen.get_width() / 2 - HiscoreText_rect.width / 2
         self.screen.blit(self.hiscore_surf, (HiscoreText_x, 30))
