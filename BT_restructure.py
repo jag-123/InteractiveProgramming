@@ -9,6 +9,7 @@ import time
 BLACK = (0,0,0)
 WHITE = (255,255,255)
 RED = (255,0,0)
+GREY = (105,105,105)
 
 # define constant variables 
 gravity = 1
@@ -21,7 +22,8 @@ pictures = ['cedric.png','daniel.png','willem.png','kevin.png','anpan.png']
 
 pygame.display.set_caption('Hot Tamales Awesome Game')
 
-background = pygame.image.load('background1.png')
+background = pygame.image.load('olin.png')
+bubble_background = pygame.image.load('bubble_background.png')
 
 pygame.time.set_timer(pygame.USEREVENT, 1000)
 
@@ -257,15 +259,17 @@ class GameView(object):
         self.model = model
         pygame.font.init()
 
-        self.font = pygame.font.SysFont('ubuntu', 60)
-        self.pause_surf = self.font.render('Press P', False, WHITE)
-        self.obj_surf = self.font.render('Pop the finest faces of Olin!', False, WHITE)
-        self.obj_surf2 = self.font.render("But beware: don't let them hit you", False, WHITE)
-        self.instructions_surf = self.font.render('Use the left and right arrow keys to move, spacebar to shoot', False, WHITE)
-        self.start_surf = self.font.render('Press anything to start', False, WHITE)
-        self.start_surf2 = self.font.render('Press P to pause', False, WHITE)
-        self.game_over_surf = self.font.render('GAME OVER', False, RED)
-        self.restart_surf = self.font.render('Press R to restart', False, RED)
+        self.font = pygame.font.SysFont('dodge', 40)
+        self.font1 = pygame.font.SysFont('zorque', 100)
+        self.font2 = pygame.font.SysFont('zorque', 60)
+        self.pause_surf = self.font2.render('PRESS P TO UNPAUSE', False, WHITE)
+        self.obj_surf = self.font1.render('BUBBLE TROUBLE: OLIN EDITION', False, GREY)
+        self.instructions_surf = self.font.render('LEFT AND RIGHT ARROW KEYS TO MOVE', False, WHITE)
+        self.instructions_surf2 = self.font.render('SPACE TO SHOOT', False, WHITE)
+        self.start_surf = self.font.render('PRESS P TO PAUSE', False, WHITE)
+        self.start_surf2 = self.font.render('PRESS ANY KEY TO START', False, BLACK)
+        self.game_over_surf = self.font2.render('GAME OVER', False, RED)
+        self.restart_surf = self.font2.render('PRESS R TO RESTART', False, RED)
 
     def draw(self, alive):
         """ Redraws the game window """
@@ -281,7 +285,7 @@ class GameView(object):
 
     def draw_score(self):
         """ Draws score on screen """
-        font = pygame.font.SysFont('ubuntu',50)
+        font = pygame.font.SysFont('dejavusans',50)
         scoretext = font.render('Score: ' + str(self.model.score), 2, [255,255,255])
         boxsize = scoretext.get_rect()
         scoreXpos = (screen_width-boxsize[2])/2
@@ -289,7 +293,7 @@ class GameView(object):
 
     def draw_lives_left(self):
         """ Draws how many lives the player has left on screen """
-        font = pygame.font.SysFont('ubuntu',40)
+        font = pygame.font.SysFont('dejavusans',40)
         livestext = font.render('Lives remaining: ' + str(self.model.lives), 2, [255,255,255])
         boxsize = livestext.get_rect()
         livesXpos = (screen_width-boxsize[2])/2
@@ -298,27 +302,32 @@ class GameView(object):
     def start(self):
         """ Draws start screen for game """
         self.draw(True)
+        self.screen.blit(bubble_background, (0,0))
 
         Obj_rect = self.obj_surf.get_rect()                                   # wordy, but used to center text on screen 
         ObjText_x = self.screen.get_width() / 2 - Obj_rect.width / 2
         ObjText_y = (self.screen.get_height() / 2 - Obj_rect.height / 2) - 150
-        self.screen.blit(self.obj_surf, (ObjText_x, ObjText_y))
+        self.screen.blit(self.obj_surf, (ObjText_x, ObjText_y-100))
 
-        Obj2_rect = self.obj_surf2.get_rect()
-        Obj2Text_x = self.screen.get_width() / 2 - Obj2_rect.width / 2
-        self.screen.blit(self.obj_surf2, (Obj2Text_x, ObjText_y+70))
+        # Obj2_rect = self.obj_surf2.get_rect()
+        # Obj2Text_x = self.screen.get_width() / 2 - Obj2_rect.width / 2
+        # self.screen.blit(self.obj_surf2, (Obj2Text_x, ObjText_y+70))
 
         Instruct_rect = self.instructions_surf.get_rect()
         InstructText_x = self.screen.get_width() / 2 - Instruct_rect.width / 2
-        self.screen.blit(self.instructions_surf, (InstructText_x,ObjText_y+140))
+        self.screen.blit(self.instructions_surf, (InstructText_x,ObjText_y+170))
+
+        Instruct2_rect = self.instructions_surf2.get_rect()
+        Instruct2Text_x = self.screen.get_width() / 2 - Instruct2_rect.width / 2
+        self.screen.blit(self.instructions_surf2, (Instruct2Text_x,ObjText_y+220))
         
         Start_rect = self.start_surf.get_rect()
         StartText_x = self.screen.get_width() / 2 - Start_rect.width / 2
-        self.screen.blit(self.start_surf, (StartText_x, ObjText_y+210))
+        self.screen.blit(self.start_surf, (StartText_x, ObjText_y+270))
 
         Start2_rect = self.start_surf2.get_rect()
         Start2Text_x = self.screen.get_width() / 2 - Start2_rect.width / 2
-        self.screen.blit(self.start_surf2, (Start2Text_x, ObjText_y+280))
+        self.screen.blit(self.start_surf2, (Start2Text_x, ObjText_y+370))
         pygame.display.flip()
 
     def pause(self):
@@ -327,24 +336,24 @@ class GameView(object):
         PauseText_x = self.screen.get_width() / 2 - Pause_rect.width / 2
         PauseText_y = self.screen.get_height() / 2 - Pause_rect.height / 2
         self.screen.fill(BLACK)
+        #self.screen.blit(pause_background, (0,0))
         self.screen.blit(self.pause_surf, (PauseText_x,PauseText_y))
 
-        Instruct_rect = self.instructions_surf.get_rect()
-        InstructText_x = self.screen.get_width() / 2 - Instruct_rect.width / 2
-        self.screen.blit(self.instructions_surf, (InstructText_x,PauseText_y+70))
         pygame.display.flip()
 
     def draw_game_over(self):
         """ Draws game over screen for game """
+        self.screen.blit(bubble_background, (0,0))
+
         GameOverText_rect = self.game_over_surf.get_rect()
         GameOverText_x = self.screen.get_width() / 2 - GameOverText_rect.width / 2
-        GameOverText_y = self.screen.get_height() / 2 - GameOverText_rect.height / 2
+        GameOverText_y = self.screen.get_height() / 2 - GameOverText_rect.height / 2 - 300
         self.screen.blit(self.game_over_surf, [GameOverText_x, GameOverText_y])
         
 
         RestartText_rect = self.restart_surf.get_rect()
         RestartText_x = self.screen.get_width() / 2 - RestartText_rect.width / 2
-        self.screen.blit(self.restart_surf, (RestartText_x, GameOverText_y+70))
+        self.screen.blit(self.restart_surf, (RestartText_x, GameOverText_y+100))
         pygame.display.flip()
 
 #Creates a histogram of items(minus the last 4 characters) in a list 
