@@ -4,6 +4,7 @@ import os, sys
 from pygame.locals import * 
 import random
 import time
+import pickle
 
 # define font/fill colors
 BLACK = (0,0,0)
@@ -17,12 +18,29 @@ screen_width = 1700
 screen_height = 900
 fps = 120
 
+CURR_DIR = os.path.dirname(os.path.realpath(__file__))
+
 # prepare/load pictures 
-pictures = ['cedric.png','daniel.png','willem.png','kevin.png','anpan.png']
+pictures = ['cedric.png','daniel.png','willem.png','kevin.png','anpan.png','mica.png']
 
 pygame.display.set_caption('Hot Tamales Awesome Game')
 
 background = pygame.image.load('olin.png')
+
+size = 22
+cedric = pygame. image.load('cedric.png')
+cedric = pygame.transform.scale(cedric,(size*10,size*10))
+daniel = pygame.image.load('daniel.png')
+daniel = pygame.transform.scale(daniel,(size*10,size*10))
+willem = pygame.image.load('willem.png')
+willem = pygame.transform.scale(willem,(size*10,size*10))
+kevin = pygame.image.load('kevin.png')
+kevin = pygame.transform.scale(kevin,(size*10,size*10))
+anpan = pygame.image.load('anpan.png')
+anpan = pygame.transform.scale(anpan,(size*10,size*10))
+mica = pygame.image.load('mica.png')
+mica = pygame.transform.scale(mica,(size*10,size*10))
+
 bubble_background = pygame.image.load('bubble_background.png')
 
 pygame.time.set_timer(pygame.USEREVENT, 1000)
@@ -132,7 +150,7 @@ class GameModel(object):
         self.character_hit_list = []
         self.bubble_hit_list = []
 
-        self.original_size = 4
+        self.original_size = 16
         self.original_x_speed = 5
         self.original_y_speed = 3
 
@@ -270,6 +288,11 @@ class GameView(object):
         self.start_surf2 = self.font.render('PRESS ANY KEY TO START', False, BLACK)
         self.game_over_surf = self.font2.render('GAME OVER', False, RED)
         self.restart_surf = self.font2.render('PRESS R TO RESTART', False, RED)
+        if os.path.exists(CURR_DIR + '/hiscore.txt'):
+            hiscore = str(pickle.load(open(CURR_DIR + '/hiscore.txt')))
+        else: hiscore = '0'
+        self.hiscore_surf = self.font1.render("Hiscore: " + hiscore, False, BLACK)
+        pygame.display.set_caption("Hot Tamales Game")
 
     def draw(self, alive):
         """ Redraws the game window """
@@ -339,11 +362,20 @@ class GameView(object):
         #self.screen.blit(pause_background, (0,0))
         self.screen.blit(self.pause_surf, (PauseText_x,PauseText_y))
 
+        self.screen.blit(cedric,(200, 100))
+        self.screen.blit(daniel,(200, 600))
+        self.screen.blit(willem,(750, 100))
+        self.screen.blit(kevin,(1300, 100))
+        self.screen.blit(anpan,(1300, 600))
+        self.screen.blit(mica,(750, 600))
+
         pygame.display.flip()
 
     def draw_game_over(self):
         """ Draws game over screen for game """
         self.screen.blit(bubble_background, (0,0))
+
+        self.screen.blit(self.hiscore_surf, (200,100))
 
         GameOverText_rect = self.game_over_surf.get_rect()
         GameOverText_x = self.screen.get_width() / 2 - GameOverText_rect.width / 2
@@ -411,7 +443,6 @@ class GameMain(object):
     def GameLoop(self):
         """ Game loop """
         done = False
-        start_ticks = pygame.time.get_ticks()
         while not done:
 
             if self.pause:
@@ -430,18 +461,19 @@ class GameMain(object):
                 #self.model.more_balls()
                 self.view.draw(self.model.alive)
                 self.clock.tick(fps)
-                seconds = (pygame.time.get_ticks()-start_ticks)/10
-                if seconds == 100:
-                    self.model.balls.append(Ball(4,[5,3]))
-                elif seconds > 3000:
-                    self.model.balls.append(Ball(6,[5,3]))
             else:
                 print self.view.score_sheet(self.view.hit_list(self.model.bubble_hit_list))
                 print self.view.score_sheet(self.view.hit_list(self.model.character_hit_list))
                 #self.view.draw_score_sheet(self.model.bubble_hit_list,self.model.character_hit_list)
-                self.model.score = 0
+                #self.model.score = 0
                 self.model.lives = 3
                 done = True
+                if os.path.exists(CURR_DIR + '/hiscore.txt'):
+                    count = pickle.load(open(CURR_DIR + '/hiscore.txt', 'rb'))
+                else: count = 0
+                if self.model.score > count:
+                    count = self.model.score
+                pickle.dump(count,open(CURR_DIR + '/hiscore.txt', 'wb'))   
     
 def game_over(MainWindow):
     """ Player can restart """
