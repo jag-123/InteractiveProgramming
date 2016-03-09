@@ -3,6 +3,7 @@ import pygame
 import os, sys
 from pygame.locals import * 
 import random
+import time
 
 # define font/fill colors
 BLACK = (0,0,0)
@@ -117,6 +118,7 @@ class GameModel(object):
         self.width = screen_width
         self.height = screen_height
 
+        self.count = 0
         self.score = 0
         self.lives = 3
         self.player1 = Player()
@@ -124,11 +126,37 @@ class GameModel(object):
         self.alive = self.player1.alive
 
         self.balls = []
-        self.balls.append(Ball(12,[6,4]))
+
+        self.character_hit_list = []
+        self.bubble_hit_list = []
+
+        self.original_size = 4
+        self.original_x_speed = 5
+        self.original_y_speed = 3
+
+        self.balls.append(Ball(self.original_size,[self.original_x_speed,self.original_y_speed]))
+
         self.list_of_bubbles = pygame.sprite.Group()
         self.player_list = pygame.sprite.Group()
         self.gun_list = pygame.sprite.Group()
 
+    # def more_balls(self):
+    #     self.count = 0
+    #     if not self.balls:
+    #         self.count += 1
+    #         print self.count
+    #     if self.count == 1:
+    #         self.balls.append(Ball(4,[5,3]))
+    #         print self.count
+        # elif self.count == 2:
+        #     self.balls.append(Ball(4,[5,3]))
+        #     self.balls.append(Ball(4,[-5,3],screen_width))
+        #     self.count += 1
+
+        # seconds = (pygame.time.get_ticks())/1000
+        # if seconds == 2:
+        #     self.balls.append(Ball(4,[5,3]))
+        
     def update(self, pos):
         """ Updates all sprites """
         self.list_of_bubbles.update()
@@ -144,6 +172,7 @@ class GameModel(object):
         """ Checks for collisions between sprites """
         for index, ball in enumerate(self.balls):
             if player.gun.active and pygame.sprite.collide_rect(player.gun, ball):
+                self.bubble_hit_list.append(ball.pic)
                 bubble_pop_sound.play()
                 self.score +=1
                 player.gun.active = False
@@ -151,6 +180,7 @@ class GameModel(object):
                 self.split_ball(index)
 
             if pygame.sprite.collide_mask(player,ball):
+                self.character_hit_list.append(ball.pic)
                 player_hit_sound.play()
                 self.lives -= 1
                 player.gun.active = False
@@ -317,6 +347,30 @@ class GameView(object):
         self.screen.blit(self.restart_surf, (RestartText_x, GameOverText_y+70))
         pygame.display.flip()
 
+#Creates a histogram of items(minus the last 4 characters) in a list 
+    def hit_list(self,l):
+        hist = dict()
+        for item in l:
+            item = item[:-4]
+            hist[item] = hist.get(item,0) + 1
+        return hist
+
+    def score_sheet(self,hit_list):
+        t = []
+        for key, value in hit_list.items():
+            t.append((value,key))
+        t.sort(reverse = True)
+        return t
+
+    def draw_score_sheet(self,l1,l2):
+        self.font.render('You shot:', False, RED)
+        t1 = self.score_sheet(self.hit_list(l1))
+        for score, person in t1:
+            self.font.render('{} : {}'.format(person,score),False, RED)
+        self.font.render('You were touched by:', False, RED)
+        t2 = self.score_sheet(self.hit_list(l2))
+        for score, person in t2:
+            self.font.render('{} : {}'.format(person,score),False, RED)
 class GameMain(object):
     """ Main class """
     def __init__(self, width = screen_width, height = screen_height):
@@ -337,7 +391,7 @@ class GameMain(object):
         self.pause = False
 
     def main_menu(self):
-        """ Displays main menun and waits for user input """
+        """ Displays main menu and waits for user input """
         start = False
         self.view.start()
         while not start:
@@ -348,6 +402,7 @@ class GameMain(object):
     def GameLoop(self):
         """ Game loop """
         done = False
+        start_ticks = pygame.time.get_ticks()
         while not done:
 
             if self.pause:
@@ -363,9 +418,18 @@ class GameMain(object):
                 done, self.pause = self.controller.player_mvmt()
                 self.model.update(self.model.player1.pos)
                 self.model.is_collision(self.model.player1, self.model.list_of_bubbles)
+                #self.model.more_balls()
                 self.view.draw(self.model.alive)
                 self.clock.tick(fps)
+                seconds = (pygame.time.get_ticks()-start_ticks)/10
+                if seconds == 100:
+                    self.model.balls.append(Ball(4,[5,3]))
+                elif seconds > 3000:
+                    self.model.balls.append(Ball(6,[5,3]))
             else:
+                print self.view.score_sheet(self.view.hit_list(self.model.bubble_hit_list))
+                print self.view.score_sheet(self.view.hit_list(self.model.character_hit_list))
+                #self.view.draw_score_sheet(self.model.bubble_hit_list,self.model.character_hit_list)
                 self.model.score = 0
                 self.model.lives = 3
                 done = True
