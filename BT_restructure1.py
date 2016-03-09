@@ -138,7 +138,7 @@ class GameModel(object):
         self.width = screen_width
         self.height = screen_height
 
-        self.count = 0
+        self.count = 1
         self.score = 0
         self.lives = 3
         self.player1 = Player()
@@ -150,24 +150,25 @@ class GameModel(object):
         self.character_hit_list = []
         self.bubble_hit_list = []
 
-        self.original_size = 16
-        self.original_x_speed = 5
-        self.original_y_speed = 3
+        # self.original_size = 16
+        # self.original_x_speed = 5
+        # self.original_y_speed = 3
 
-        self.balls.append(Ball(self.original_size,[self.original_x_speed,self.original_y_speed]))
+        # self.balls.append(Ball(self.original_size,[self.original_x_speed,self.original_y_speed]))
+        self.more_balls()
 
         self.list_of_bubbles = pygame.sprite.Group()
         self.player_list = pygame.sprite.Group()
         self.gun_list = pygame.sprite.Group()
 
-    # def more_balls(self):
-    #     self.count = 0
-    #     if not self.balls:
-    #         self.count += 1
-    #         print self.count
-    #     if self.count == 1:
-    #         self.balls.append(Ball(4,[5,3]))
-    #         print self.count
+    def more_balls(self):
+		self.original_size = 4
+		self.original_x_speed = 5
+		self.original_y_speed = 3
+
+		for i in range(self.count):
+			self.balls.append(Ball(self.original_size,[self.original_x_speed,self.original_y_speed]))
+
         # elif self.count == 2:
         #     self.balls.append(Ball(4,[5,3]))
         #     self.balls.append(Ball(4,[-5,3],screen_width))
@@ -219,7 +220,10 @@ class GameModel(object):
         if ball.size > 2:
             self.balls.append(Ball(ball.size-2,[-3,-3], ball.rect.left - 5, ball.rect.top-200))
             self.balls.append(Ball(ball.size-2,[3,-3], ball.rect.left + 5, ball.rect.top-200))
-
+            
+        if not self.balls:
+        	self.count += 1
+        	self.more_balls()
 
     def draw_sprites(self):
         """ Draw all sprites onto screen """
