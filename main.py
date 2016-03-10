@@ -45,8 +45,8 @@ pygame.time.set_timer(pygame.USEREVENT, 1000)
 # initialize/load sounds
 pygame.mixer.init()
 
-bubble_pop_sound = pygame.mixer.Sound(CURR_DIR + '/sounds/bubble_pop.ogg')
-player_hit_sound = pygame.mixer.Sound(CURR_DIR + '/sounds/Frant_edit2.ogg')
+bubble_pop_sound = pygame.mixer.Sound(CURR_DIR + '/sound/bubble_pop.ogg')
+player_hit_sound = pygame.mixer.Sound(CURR_DIR + '/sound/Frant_edit2.ogg')
 
 class Player(pygame.sprite.Sprite):
     """ Main character for game """
