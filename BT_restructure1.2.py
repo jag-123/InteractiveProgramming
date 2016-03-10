@@ -5,6 +5,7 @@ from pygame.locals import *
 import random
 import time
 import pickle
+import re
 
 # define font/fill colors
 BLACK = (0,0,0)
@@ -21,22 +22,22 @@ fps = 120
 CURR_DIR = os.path.dirname(os.path.realpath(__file__))
 
 # prepare/load pictures 
-pictures = ['cedric.png','daniel.png','willem.png','kevin.png','anpan.png','mica.png']
-background = pygame.image.load('olin.png')
-bubble_background = pygame.image.load('bubble_background.png')
+pictures = [CURR_DIR + '/images/cedric.png',CURR_DIR + '/images/daniel.png',CURR_DIR + '/images/willem.png',CURR_DIR + '/images/kevin.png',CURR_DIR + '/images/anpan.png',CURR_DIR + '/images/mica.png']
+background = pygame.image.load(CURR_DIR + '/images/olin.png')
+bubble_background = pygame.image.load(CURR_DIR + '/images/bubble_background.png')
 
 size = 22
-cedric = pygame. image.load('cedric.png')
+cedric = pygame. image.load(CURR_DIR + '/images/cedric.png')
 cedric = pygame.transform.scale(cedric,(size*10,size*10))
-daniel = pygame.image.load('daniel.png')
+daniel = pygame.image.load(CURR_DIR + '/images/daniel.png')
 daniel = pygame.transform.scale(daniel,(size*10,size*10))
-willem = pygame.image.load('willem.png')
+willem = pygame.image.load(CURR_DIR + '/images/willem.png')
 willem = pygame.transform.scale(willem,(size*10,size*10))
-kevin = pygame.image.load('kevin.png')
+kevin = pygame.image.load(CURR_DIR + '/images/kevin.png')
 kevin = pygame.transform.scale(kevin,(size*10,size*10))
-anpan = pygame.image.load('anpan.png')
+anpan = pygame.image.load(CURR_DIR + '/images/anpan.png')
 anpan = pygame.transform.scale(anpan,(size*10,size*10))
-mica = pygame.image.load('mica.png')
+mica = pygame.image.load(CURR_DIR + '/images/mica.png')
 mica = pygame.transform.scale(mica,(size*10,size*10))
 
 pygame.time.set_timer(pygame.USEREVENT, 1000)
@@ -44,17 +45,17 @@ pygame.time.set_timer(pygame.USEREVENT, 1000)
 # initialize/load sounds
 pygame.mixer.init()
 
-bubble_pop_sound = pygame.mixer.Sound('bubble_pop.ogg')
-player_hit_sound = pygame.mixer.Sound('Frant_edit2.ogg')
+bubble_pop_sound = pygame.mixer.Sound(CURR_DIR + '/sounds/bubble_pop.ogg')
+player_hit_sound = pygame.mixer.Sound(CURR_DIR + '/sounds/Frant_edit2.ogg')
 
 class Player(pygame.sprite.Sprite):
     """ Main character for game """
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.alive = True                                               # if False, game over
-        self.img_left = pygame.image.load('character1_edit.png')        # 3 pictures for each direction character is facing
-        self.img_default = pygame.image.load('character2_edit.png')
-        self.img_right = pygame.image.load('character3_edit.png')
+        self.img_left = pygame.image.load(CURR_DIR + '/images/character1_edit.png')        # 3 pictures for each direction character is facing
+        self.img_default = pygame.image.load(CURR_DIR + '/images/character2_edit.png')
+        self.img_right = pygame.image.load(CURR_DIR + '/images/character3_edit.png')
         self.image = self.img_default
         self.rect = self.image.get_rect()
         self.gun = Gun()
@@ -79,7 +80,7 @@ class Gun(pygame.sprite.Sprite):
     def __init__(self, x = 0, y = 0):
         pygame.sprite.Sprite.__init__(self)
         self.active = False                                             # won't fire unless space key is pressed
-        self.image = pygame.image.load('arrow2.png')
+        self.image = pygame.image.load(CURR_DIR + '/images/arrow2.png')
         self.rect = self.image.get_rect()
         self.rect.left = x
         self.rect.top = y
@@ -356,12 +357,12 @@ class GameView(object):
         self.screen.blit(self.pause_surf, (PauseText_x,PauseText_y))
 
         """ Draws Olin faces to give player better look at their pretty pics """
-        self.screen.blit(cedric,(200, 100))
+        self.screen.blit(mica,(200, 100))
         self.screen.blit(daniel,(200, 600))
         self.screen.blit(willem,(750, 100))
         self.screen.blit(kevin,(1300, 100))
         self.screen.blit(anpan,(1300, 600))
-        self.screen.blit(mica,(750, 600))
+        self.screen.blit(cedric,(750, 600))
 
         pygame.display.flip()
 
@@ -404,6 +405,8 @@ class GameView(object):
     def hit_list(self,l):
         hist = dict()
         for item in l:
+            item = item.replace(CURR_DIR,'')
+            item = re.sub('/.*?/', '', item)
             item = item[:-4]
             hist[item] = hist.get(item,0) + 1
         return hist
