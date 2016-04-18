@@ -1,4 +1,8 @@
-"""player for game"""
+"""Bubble Trouble: Olin Edition, designed using model-view-controller, generates bubbles
+with pictures of Olin students for the player to pop until the player runs out of lives.
+Once a bubble is hit, it splits into two smaller bubbles which travel in opposite directions. 
+This occurs until the bubble is a sufficiently small size, upon which it disappears when hit. """
+
 import pygame
 import os, sys
 from pygame.locals import * 
@@ -27,7 +31,7 @@ background = pygame.image.load(CURR_DIR + '/images/olin.png')
 bubble_background = pygame.image.load(CURR_DIR + '/images/bubble_background.png')
 
 size = 22
-cedric = pygame. image.load(CURR_DIR + '/images/cedric.png')
+cedric = pygame.image.load(CURR_DIR + '/images/cedric.png')
 cedric = pygame.transform.scale(cedric,(size*10,size*10))
 daniel = pygame.image.load(CURR_DIR + '/images/daniel.png')
 daniel = pygame.transform.scale(daniel,(size*10,size*10))
@@ -53,45 +57,96 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.alive = True                                               # if False, game over
-        self.img_left = pygame.image.load(CURR_DIR + '/images/character1_edit.png')        # 3 pictures for each direction character is facing
-        self.img_default = pygame.image.load(CURR_DIR + '/images/character2_edit.png')
-        self.img_right = pygame.image.load(CURR_DIR + '/images/character3_edit.png')
-        self.image = self.img_default
+        
+        self.img_default = pygame.image.load(CURR_DIR + '/images/default_ninja.png')
+        
+        self.sheet = pygame.image.load(CURR_DIR +'/images/ninja.png') #sprite sheet for player animation
+        self.sprite_row = 0
+        self.dt_image = 0.0
+        self.column = 0
+        self.animation_speed = 0.10
+
+        self.width = 58
+        self.height = 64
+
+        self.sheet.set_clip(pygame.Rect(self.column*self.width,self.sprite_row*self.height,self.width,self.height))
+        self.image = self.sheet.subsurface(self.sheet.get_clip())
+
         self.rect = self.image.get_rect()
         self.gun = Gun()
         self.rect.left = screen_width/2
         self.rect.top = 834
 
-    def update(self, pos):
+    def update(self, pos, dt):
         self.pos = pos
         if self.alive:
-            if self.pos == 1:                                           # if right key is pressed, character moves right
-                self.rect.left += self.pos + 5
-                if self.rect.left >= screen_width - 48 :                # won't go past edge of screen
+
+            self.dt_image += dt
+            if self.dt_image > self.animation_speed: #changes the subimage to make animation
+                self.column += 1
+                if self.column >= 6:
+                    self.column = 0
+                self.dt_image = 0
+
+            if self.pos == 1:       # if right key is pressed, character moves right
+                self.sheet.set_clip(pygame.Rect(self.column * self.width, self.sprite_row * self.height, self.width, self.height))
+                self.image = self.sheet.subsurface(self.sheet.get_clip())
+                self.rect.left += self.pos + 5                          
+                if self.rect.left >= screen_width - 48:                # won't go past edge of screen
                     self.rect.left = screen_width - 48
 
-            elif self.pos == -1:                                        # if left key is pressed, character moves left
+            elif self.pos == -1:                                   # if left key is pressed, character moves left
+                self.sheet.set_clip(pygame.Rect(self.column * self.width, self.sprite_row * self.height, self.width, self.height))
+                self.image = self.sheet.subsurface(self.sheet.get_clip())
+                self.image = pygame.transform.flip(self.image, True, False) #flips the image if walking the other way
                 self.rect.left += self.pos - 5
                 if self.rect.left <= 0:                                 # won't go past edge of screen
                     self.rect.left = 0
+
+        else:
+            self.image = pygame.image.load(CURR_DIR + '/images/dead_ninja.png') #image for player after it has lost a life
+
 
 class Gun(pygame.sprite.Sprite):
     """ Weapon that shoots arrow to pop bubbles """
     def __init__(self, x = 0, y = 0):
         pygame.sprite.Sprite.__init__(self)
         self.active = False                                             # won't fire unless space key is pressed
-        self.image = pygame.image.load(CURR_DIR + '/images/arrow2.png')
+        self.sheet = pygame.image.load(CURR_DIR + '/images/fireball_0.png') #fireball sprite sheet
+        self.sprite_row = 0
+        self.dt_image = 0.0
+        self.column = 0
+        self.animation_speed = 0.10
+
+        self.width = 18
+        self.height = 35
+
+        self.sheet.set_clip(pygame.Rect(self.column*self.width,self.sprite_row*self.height,self.width,self.height))
+        self.image = self.sheet.subsurface(self.sheet.get_clip())
+
         self.rect = self.image.get_rect()
         self.rect.left = x
         self.rect.top = y
 
-    def update(self):
+    def update(self, dt):
+        self.dt_image += dt
+
         if self.active:
+
+            if self.dt_image > self.animation_speed: #animation to make the fireball change
+                self.column += 1
+                if self.column >= 7:
+                    self.column = 0
+                self.dt_image = 0
+
+            self.sheet.set_clip(pygame.Rect(self.column*self.width,self.sprite_row*self.height,self.width,self.height))
+            self.image = self.sheet.subsurface(self.sheet.get_clip())
+
             if self.rect.top <= 0:                                      # disappears when hits top of screen                      
                 self.active = False
                 self.kill()
             else:
-                self.rect.top -= 10
+                self.rect.top -= 17
         else:
             self.kill()
 
@@ -128,7 +183,7 @@ class Ball(pygame.sprite.Sprite):
         self.number = number
         self.min_number = min_number
         self.max_number = max_number
-        return min(max(self.number,self.min_number),self.max_number)
+        return min(max(self.number,self.min_number),self.max_number) # min and max are used to find the correct number for the wall
 
 class GameModel(object):
     """ Model for game """
@@ -152,28 +207,24 @@ class GameModel(object):
         self.more_balls()
 
         self.list_of_bubbles = pygame.sprite.Group()
-        self.player_list = pygame.sprite.Group()
-        self.gun_list = pygame.sprite.Group()
+        self.gun_list = pygame.sprite.Group(self.player1.gun)
+        self.player_sprite = pygame.sprite.Group(self.player1)
 
     def more_balls(self):
         """ Generates/adds more balls once the player has cleared all other balls """
-        # self.original_size = 4
-        # self.original_x_speed = 5
-        # self.original_y_speed = 3
-
         for i in range(self.count):
             self.balls.append(Ball(random.randint(8,12),[3,5], random.randint(1,screen_width), random.randint(1,screen_height-(screen_height/3))))
         
-    def update(self, pos):
+    def update(self, pos, dt):
         """ Updates all sprites """
         self.list_of_bubbles.update()
-        self.player_list.update(pos)
-        self.gun_list.update()
+        self.player_sprite.update(pos,dt)
+        self.gun_list.update(dt)
 
         for ball in self.balls:
             self.list_of_bubbles.add(ball)
 
-        self.player_list.add(self.player1)        
+        self.player_sprite.add(self.player1)        
 
     def is_collision(self,player,bubble_list):
         """ Checks for collisions between sprites """
@@ -189,6 +240,9 @@ class GameModel(object):
             if pygame.sprite.collide_mask(player,ball):
                 self.character_hit_list.append(ball.pic)
                 player_hit_sound.play()
+
+                self.player1.image = pygame.image.load(CURR_DIR + '/images/dead_ninja.png') #image for player after it has lost a life
+
                 self.lives -= 1
                 player.gun.active = False
                 ball.kill()
@@ -213,7 +267,7 @@ class GameModel(object):
 
     def draw_sprites(self):
         """ Draw all sprites onto screen """
-        all_sprites_list = [self.list_of_bubbles, self.gun_list, self.player_list]
+        all_sprites_list = [self.list_of_bubbles, self.gun_list, self.player_sprite]
         return all_sprites_list
 
 class GameController(object):
@@ -224,7 +278,7 @@ class GameController(object):
         self.done = False
         self.pause = False
 
-    def player_mvmt(self):
+    def player_mvmt(self, dt = 0):
         """ Organizes keypresses """
         key = pygame.key.get_pressed()
         self.pause = False
@@ -241,17 +295,15 @@ class GameController(object):
             self.model.player1.image = self.model.player1.img_default
         elif key[pygame.K_RIGHT]:
             self.model.player1.pos = 1
-            self.model.player1.image = self.model.player1.img_right
         elif key[pygame.K_LEFT]:
             self.model.player1.pos = -1
-            self.model.player1.image = self.model.player1.img_left
         else:
             self.model.player1.image = self.model.player1.img_default
 
         if key[pygame.K_SPACE] and self.model.player1.gun.active == False:
             self.model.gun_list.add(self.model.player1.gun)
             self.model.player1.gun.active = True
-            self.model.player1.gun.rect.left = self.model.player1.rect.left+20
+            self.model.player1.gun.rect.left = self.model.player1.rect.left + 20 #makes sure the gun and the player are at the same location
             self.model.player1.gun.rect.top = self.model.player1.rect.top
             player1.image = player1.img_default
 
@@ -353,7 +405,6 @@ class GameView(object):
         PauseText_x = self.screen.get_width() / 2 - Pause_rect.width / 2
         PauseText_y = self.screen.get_height() / 2 - Pause_rect.height / 2
         self.screen.fill(BLACK)
-        #self.screen.blit(pause_background, (0,0))
         self.screen.blit(self.pause_surf, (PauseText_x,PauseText_y))
 
         """ Draws Olin faces to give player better look at their pretty pics """
@@ -467,6 +518,9 @@ class GameMain(object):
     def GameLoop(self):
         """ Game loop """
         done = False
+
+        lastGetTicks = pygame.time.get_ticks()
+
         while not done:
 
             if self.pause:
@@ -478,13 +532,18 @@ class GameMain(object):
                     elif event.type == pygame.QUIT:
                         done = True
             elif self.model.alive:
+                t = pygame.time.get_ticks()
+                dt = (t- lastGetTicks) / 1000.0
+                lastGetTicks = t
+
                 self.model.player1.pos = 0
                 done, self.pause = self.controller.player_mvmt()
-                self.model.update(self.model.player1.pos)
+                self.model.update(self.model.player1.pos, dt)
                 self.model.is_collision(self.model.player1, self.model.list_of_bubbles)
                 self.view.draw(self.model.alive)
                 self.clock.tick(fps)
             else:
+                pygame.time.delay(1000)
                 self.model.lives = 3
                 done = True
                 if os.path.exists(CURR_DIR + '/hiscore.txt'):
